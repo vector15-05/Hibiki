@@ -1,33 +1,35 @@
 package video
 
 import (
-	"bufio"
 	"fmt"
-	"image"
-	_ "image/jpeg"
 	"io"
+	"os"
 	"os/exec"
 )
 
 type Decoder struct {
 	cmd *exec.Cmd
 	stdout io.ReadCloser
-	reader *bufio.Reader
+	width int
+	height int
 }
 
 func NewDecoder(videoPath string, width, height, fps int) (*Decoder) {
-	filer := fmt.Sprintf("fps=%d, scale=%d:%d", fps, width, height)
+	filter := fmt.Sprintf("fps=%d, scale=%d:%d", fps, width, height)
 
 	cmd := exec.Command(
 		"ffmpeg", 
 		"-i", videoPath, 
 		"-vf", filter, 
-		"-f", "image2pipe", 
-		"-vcodec","mjpeg", 
-		"-loglevel","quiet", 
+		"-f", "rawvideo",     
+		"-pix_fmt", "gray",   
+		"-loglevel", "quiet", 
 		"pipe:1")
+	cmd.Stderr = os.Stderr 
 	return &Decoder{
 		cmd: cmd,
+		width:  width,
+		height: height,
 	}
 }
 
@@ -42,16 +44,18 @@ func (d *Decoder) Start() error {
 		return fmt.Errorf("ffmpeg got cooked: %w", err)
 	}
 
-	d.reader = bufio.NewReader(d.stdout)
 	return nil
 }
 
-func (d *Decoder) NextFrame() (image.Image, error) {
-	img, _, err := image.Decode(d.reader)
+func (d *Decoder) NextFrame() ([]byte, error) {
+	frameSize := d.width * d.height
+	buffer := make([]byte, frameSize)
+	_, err := io.ReadFull(d.stdout, buffer) // grab the whole frame no more no less
+
 	if err != nil {
-		return nil, fmt.Errorf("decoder got cooked gang: %w", err)
+		return nil, err
 	}
-	return img, nil
+	return buffer, nil
 }
 
 func (d *Decoder) Stop() error {

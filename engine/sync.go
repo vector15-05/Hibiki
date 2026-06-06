@@ -50,7 +50,7 @@ func Run(mediaPath string) error{
 			break //video is over
 		}
 
-		asciiFrame := render.FrameToString(frame)
+		asciiFrame := render.FrameToString(frame,100, 40)
 		fmt.Print("\033[H]"+ asciiFrame) // moves the cursor to the top-left corner 
 	}
 
