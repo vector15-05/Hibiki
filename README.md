@@ -1,5 +1,7 @@
 # Hibiki
 
+Here's a demonstration: https://x.com/_vector15/status/2063297998654984465?s=20
+
 Hibiki is a high-performance, synchronized ASCII video and audio playback engine designed for the terminal. Written in Go, it leverages `ffmpeg` for raw byte-stream video decoding and `mpv` for headless, Wayland-compatible audio execution.
 
 ## Features
